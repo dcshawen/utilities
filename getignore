@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Script: getignore
+# Description: Downloads a specified .gitignore template from GitHub's official repository
+#              and saves it locally as .gitignore.
+# Usage: getignore <Template>
+# Example: getignore Python
+
+# --- Input Validation ---
+
+# Check if exactly one argument was provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <TemplateName>"
+    echo "Example: $0 VisualStudio"
+    exit 1
+fi
+
+# Store the template name supplied as the first parameter
+TEMPLATE_NAME=$1
+
+# --- Core Logic ---
+
+echo "Attempting to download template: $TEMPLATE_NAME"
+
+# Base URL for the raw .gitignore files on GitHub
+BASE_URL="https://raw.githubusercontent.com/github/gitignore/refs/heads/main/"
+
+# Construct the full URL
+FULL_URL="${BASE_URL}/${TEMPLATE_NAME}.gitignore"
+
+# Execute the curl command:
+# -L: Follow redirects
+# -o: Specify the output file name as .gitignore in the current directory
+curl -L "$FULL_URL" -o .gitignore
+
+# --- Result Check ---
+
+# Check the exit status of the previous command (curl)
+if [ $? -eq 0 ]; then
+    echo "Success: Downloaded $TEMPLATE_NAME template and saved it as .gitignore"
+else
+    echo "Error: Failed to download the template."
+    echo "Note: Ensure the template name is correct (e.g., Python, VisualStudio, Node)."
+    # Clean up any potential empty or corrupted output file
+    if [ -f .gitignore ]; then
+        rm .gitignore
+    fi
+    exit 1
+fi
+
+exit 0

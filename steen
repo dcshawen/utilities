@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# Script name: steen
+# Purpose: Start or Stop EC2 instance by ID or Name, or check status
+# Usage:
+#   steen --id <instance-id> [--stop]
+#   steen --name <name> [--stop]
+#   steen --status [<name>]
+
+# --- Parse Arguments ---
+INSTANCE_ID=""
+INSTANCE_NAME=""
+STATUS_MODE=false
+STOP_MODE=false
+NAME_FILTER=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --id)
+      INSTANCE_ID="$2"
+      shift 2
+      ;;
+    --name)
+      INSTANCE_NAME="$2"
+      shift 2
+      ;;
+    --status)
+      STATUS_MODE=true
+      if [[ -n "$2" && "$2" != --* ]]; then
+        NAME_FILTER="$2"
+        shift 2
+      else
+        shift
+      fi
+      ;;
+    --stop)
+      STOP_MODE=true
+      shift
+      ;;
+    *)
+      echo "Usage:"
+      echo "  $0 --id <instance-id> [--stop]"
+      echo "  $0 --name <name> [--stop]"
+      echo "  $0 --status [<name>]"
+      exit 1
+      ;;
+  esac
+done
+
+# --- Handle --status ---
+if $STATUS_MODE; then
+  echo "📋 Fetching EC2 instance status..."
+
+  if [[ -n "$NAME_FILTER" ]]; then
+    echo "🔍 Filtering by Name tag: '$NAME_FILTER'"
+    aws ec2 describe-instances \
+      --filters "Name=tag:Name,Values=$NAME_FILTER" \
+      --query "Reservations[*].Instances[*].[Tags[?Key=='Name'].Value | [0], InstanceId, State.Name]" \
+      --output table
+  else
+    aws ec2 describe-instances \
+      --query "Reservations[*].Instances[*].[Tags[?Key=='Name'].Value | [0], InstanceId, State.Name]" \
+      --output table
+  fi
+
+  exit 0
+fi
+
+# --- Handle --name ---
+if [[ -n "$INSTANCE_NAME" ]]; then
+  echo "🔍 Looking up instance with Name tag: '$INSTANCE_NAME'..."
+
+  INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
+    --query "Reservations[0].Instances[0].InstanceId" \
+    --output text)
+
+  if [[ "$INSTANCE_ID" == "None" || -z "$INSTANCE_ID" ]]; then
+    echo "❌ Error: No instance found with Name tag '$INSTANCE_NAME'"
+    exit 1
+  fi
+
+  echo "✅ Found instance: $INSTANCE_ID"
+fi
+
+# --- Handle --id or resolved ID from --name ---
+if [[ -n "$INSTANCE_ID" ]]; then
+  if $STOP_MODE; then
+    echo "🛑 Stopping EC2 instance: $INSTANCE_ID"
+    aws ec2 stop-instances --instance-ids "$INSTANCE_ID" > /dev/null
+
+    echo "⏳ Waiting for instance to enter 'stopped' state..."
+    aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+
+    echo "✅ Instance is stopped."
+  else
+    echo "🚀 Starting EC2 instance: $INSTANCE_ID"
+    aws ec2 start-instances --instance-ids "$INSTANCE_ID" > /dev/null
+
+    echo "⏳ Waiting for instance to enter 'running' state..."
+    aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+
+    PUBLIC_IP=$(aws ec2 describe-instances \
+      --instance-ids "$INSTANCE_ID" \
+      --query "Reservations[0].Instances[0].PublicIpAddress" \
+      --output text)
+
+    echo "✅ Instance is running."
+    echo "🌐 Public IP: $PUBLIC_IP"
+  fi
+
+  exit 0
+fi
+
+# --- If no valid option was used ---
+echo "❌ Error: No valid parameters provided."
+echo "Usage:"
+echo "  $0 --id <instance-id> [--stop]"
+echo "  $0 --name <name> [--stop]"
+echo "  $0 --status [<name>]"
+exit 1
