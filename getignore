@@ -2,23 +2,68 @@
 
 # Script: getignore
 # Description: Downloads a specified .gitignore template from GitHub's official repository
-#              and saves it locally as .gitignore.
-# Usage: getignore <Template>
-# Example: getignore Python
+#              or lists all available templates.
+# Usage: getignore <TemplateName> | --list
+# Example (Download): getignore Python
+# Example (List):     getignore --list
 
-# --- Input Validation ---
+# --- New Function: List Templates ---
 
-# Check if exactly one argument was provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <TemplateName>"
-    echo "Example: $0 VisualStudio"
+# Lists all available templates by querying the GitHub API
+list_templates() {
+  echo "Fetching available .gitignore templates from github/gitignore..."
+
+  local API_URL="https://api.github.com/repos/github/gitignore/git/trees/main?recursive=1"
+
+  # Use a subshell with pipefail to ensure errors in any part of the pipe are caught
+  (
+    set -o pipefail
+
+    # -s: Silent mode for curl
+    # -L: Follow redirects
+    # grep '"path"': Find lines with the "path" key
+    # sed -E: Use extended regex to extract the path value
+    # grep '\.gitignore$': Filter for files ending in .gitignore
+    # sed 's/\.gitignore$//': Remove the .gitignore suffix
+    # sort -f: Sort the final list case-insensitively
+    curl -sL "$API_URL" |
+      grep '"path":' |
+      sed -E 's/.*"path": "([^"]+)".*/\1/' |
+      grep '\.gitignore$' |
+      sed 's/\.gitignore$//' |
+      sort -f
+  )
+
+  # Check the exit status of the subshell
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to fetch or parse template list from GitHub API."
+    echo "Please check your internet connection."
     exit 1
+  fi
+}
+
+# --- Input Validation and Routing ---
+
+# Check for the --list argument first
+if [ "$1" == "--list" ]; then
+  list_templates
+  exit 0
+fi
+
+# --- Original Input Validation (for downloading) ---
+
+# Check if exactly one argument was provided (and it wasn't --list)
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <TemplateName> | --list"
+  echo "Example (Download): $0 VisualStudio"
+  echo "Example (List):     $0 --list"
+  exit 1
 fi
 
 # Store the template name supplied as the first parameter
 TEMPLATE_NAME=$1
 
-# --- Core Logic ---
+# --- Core Logic (Original) ---
 
 echo "Attempting to download template: $TEMPLATE_NAME"
 
@@ -26,6 +71,7 @@ echo "Attempting to download template: $TEMPLATE_NAME"
 BASE_URL="https://raw.githubusercontent.com/github/gitignore/refs/heads/main/"
 
 # Construct the full URL
+# Note: This works for nested templates too, e.g., "Global/Vim"
 FULL_URL="${BASE_URL}/${TEMPLATE_NAME}.gitignore"
 
 # Execute the curl command:
@@ -33,19 +79,20 @@ FULL_URL="${BASE_URL}/${TEMPLATE_NAME}.gitignore"
 # -o: Specify the output file name as .gitignore in the current directory
 curl -L "$FULL_URL" -o .gitignore
 
-# --- Result Check ---
+# --- Result Check (Original) ---
 
 # Check the exit status of the previous command (curl)
 if [ $? -eq 0 ]; then
-    echo "Success: Downloaded $TEMPLATE_NAME template and saved it as .gitignore"
+  echo "Success: Downloaded $TEMPLATE_NAME template and saved it as .gitignore"
 else
-    echo "Error: Failed to download the template."
-    echo "Note: Ensure the template name is correct (e.g., Python, VisualStudio, Node)."
-    # Clean up any potential empty or corrupted output file
-    if [ -f .gitignore ]; then
-        rm .gitignore
-    fi
-    exit 1
+  echo "Error: Failed to download the template."
+  echo "Note: Ensure the template name is correct (e.g., Python, Global/VisualStudio, Node)."
+  echo "Tip: Run '$0 --list' to see all available templates." # Added new tip
+  # Clean up any potential empty or corrupted output file
+  if [ -f .gitignore ]; then
+    rm .gitignore
+  fi
+  exit 1
 fi
 
 exit 0
