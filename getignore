@@ -3,11 +3,12 @@
 # Script: getignore
 # Description: Downloads a specified .gitignore template from GitHub's official repository
 #              or lists all available templates.
-# Usage: getignore <TemplateName> | --list
-# Example (Download): getignore Python
-# Example (List):     getignore --list
+# Usage: getignore <TemplateName> | --append <TemplateName> | --list
+# Example (Overwrite): getignore Python
+# Example (Append):    getignore --append Node
+# Example (List):      getignore --list
 
-# --- New Function: List Templates ---
+# --- Function: List Templates ---
 
 # Lists all available templates by querying the GitHub API
 list_templates() {
@@ -44,28 +45,32 @@ list_templates() {
 
 # --- Input Validation and Routing ---
 
-# Check for the --list argument first
+# Mode 1: List templates
 if [ "$1" == "--list" ]; then
   list_templates
   exit 0
 fi
 
-# --- Original Input Validation (for downloading) ---
+# Mode 2: Download (Append or Overwrite)
+MODE="overwrite" # Default
+if [ "$1" == "--append" ]; then
+  MODE="append"
+  shift # Remove --append, $1 is now the template name
+fi
 
-# Check if exactly one argument was provided (and it wasn't --list)
+# Now, we should have exactly one argument left: the template name
 if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <TemplateName> | --list"
-  echo "Example (Download): $0 VisualStudio"
-  echo "Example (List):     $0 --list"
+  echo "Usage: $0 <TemplateName> | --append <TemplateName> | --list"
+  echo "Example (Overwrite): $0 VisualStudio"
+  echo "Example (Append):    $0 --append Node"
+  echo "Example (List):      $0 --list"
   exit 1
 fi
 
-# Store the template name supplied as the first parameter
+# Store the template name
 TEMPLATE_NAME=$1
 
-# --- Core Logic (Original) ---
-
-echo "Attempting to download template: $TEMPLATE_NAME"
+# --- Core Logic ---
 
 # Base URL for the raw .gitignore files on GitHub
 BASE_URL="https://raw.githubusercontent.com/github/gitignore/refs/heads/main/"
@@ -74,23 +79,51 @@ BASE_URL="https://raw.githubusercontent.com/github/gitignore/refs/heads/main/"
 # Note: This works for nested templates too, e.g., "Global/Vim"
 FULL_URL="${BASE_URL}/${TEMPLATE_NAME}.gitignore"
 
-# Execute the curl command:
-# -L: Follow redirects
-# -o: Specify the output file name as .gitignore in the current directory
-curl -L "$FULL_URL" -o .gitignore
+CURL_EXIT_CODE=0
 
-# --- Result Check (Original) ---
+if [ "$MODE" == "append" ]; then
+  echo "Appending template '$TEMPLATE_NAME' to .gitignore..."
 
-# Check the exit status of the previous command (curl)
-if [ $? -eq 0 ]; then
-  echo "Success: Downloaded $TEMPLATE_NAME template and saved it as .gitignore"
+  # Add a newline before appending, if the file exists and is not empty
+  if [ -s .gitignore ]; then
+    echo -e "\n" >>.gitignore
+  fi
+
+  # Append the new content
+  # -f: Fail silently on server errors (e.g., 404)
+  # -L: Follow redirects
+  curl -fL "$FULL_URL" >>.gitignore
+  CURL_EXIT_CODE=$?
 else
-  echo "Error: Failed to download the template."
-  echo "Note: Ensure the template name is correct (e.g., Python, Global/VisualStudio, Node)."
-  echo "Tip: Run '$0 --list' to see all available templates." # Added new tip
-  # Clean up any potential empty or corrupted output file
-  if [ -f .gitignore ]; then
-    rm .gitignore
+  echo "Downloading (overwriting) template: $TEMPLATE_NAME..."
+
+  # -f: Fail silently on server errors
+  # -L: Follow redirects
+  # -o: Specify output file (overwrites)
+  curl -fL "$FULL_URL" -o .gitignore
+  CURL_EXIT_CODE=$?
+fi
+
+# --- Result Check ---
+
+if [ $CURL_EXIT_CODE -eq 0 ]; then
+  if [ "$MODE" == "append" ]; then
+    echo "Success: Appended $TEMPLATE_NAME template to .gitignore"
+  else
+    echo "Success: Downloaded $TEMPLATE_NAME and saved as .gitignore"
+  fi
+else
+  echo "Error: Failed to download the template (Code: $CURL_EXIT_CODE)."
+  echo "Note: Ensure the template name is correct (e.g., Python, Global/VisualStudio)."
+  echo "Tip: Run '$0 --list' to see all available templates."
+
+  # IMPORTANT: Only remove .gitignore if we were in 'overwrite' mode
+  # Do not destroy the original file if an append fails.
+  if [ "$MODE" == "overwrite" ]; then
+    # Clean up potential empty or corrupted output file
+    if [ -f .gitignore ]; then
+      rm .gitignore
+    fi
   fi
   exit 1
 fi
