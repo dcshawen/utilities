@@ -3,9 +3,10 @@
 # Script: getignore
 # Description: Downloads a specified .gitignore template from GitHub's official repository
 #              or lists all available templates.
-# Usage: getignore <TemplateName> | --append <TemplateName> | --list
+# Usage: getignore <TemplateName> | --append <TemplateName> | --preview <TemplateName> | --list
 # Example (Overwrite): getignore Python
 # Example (Append):    getignore --append Node
+# Example (Preview):   getignore --preview Python
 # Example (List):      getignore --list
 
 # --- Function: List Templates ---
@@ -51,18 +52,22 @@ if [ "$1" == "--list" ]; then
   exit 0
 fi
 
-# Mode 2: Download (Append or Overwrite)
+# Mode 2: Download (Append, Overwrite, or Preview)
 MODE="overwrite" # Default
 if [ "$1" == "--append" ]; then
   MODE="append"
   shift # Remove --append, $1 is now the template name
+elif [ "$1" == "--preview" ]; then
+  MODE="preview"
+  shift # Remove --preview, $1 is now the template name
 fi
 
 # Now, we should have exactly one argument left: the template name
 if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <TemplateName> | --append <TemplateName> | --list"
+  echo "Usage: $0 <TemplateName> | --append <TemplateName> | --preview <TemplateName> | --list"
   echo "Example (Overwrite): $0 VisualStudio"
   echo "Example (Append):    $0 --append Node"
+  echo "Example (Preview):   $0 --preview Python"
   echo "Example (List):      $0 --list"
   exit 1
 fi
@@ -81,7 +86,21 @@ FULL_URL="${BASE_URL}/${TEMPLATE_NAME}.gitignore"
 
 CURL_EXIT_CODE=0
 
-if [ "$MODE" == "append" ]; then
+if [ "$MODE" == "preview" ]; then
+  echo "--- Previewing template: $TEMPLATE_NAME ---"
+
+  # -f: Fail silently on server errors
+  # -L: Follow redirects
+  # Output is directed to stdout by default
+  curl -fL "$FULL_URL"
+  CURL_EXIT_CODE=$?
+
+  # Add a trailing newline for cleaner terminal output
+  if [ $CURL_EXIT_CODE -eq 0 ]; then
+    echo -e "\n--- End of preview ---"
+  fi
+
+elif [ "$MODE" == "append" ]; then
   echo "Appending template '$TEMPLATE_NAME' to .gitignore..."
 
   # Add a newline before appending, if the file exists and is not empty
@@ -109,8 +128,11 @@ fi
 if [ $CURL_EXIT_CODE -eq 0 ]; then
   if [ "$MODE" == "append" ]; then
     echo "Success: Appended $TEMPLATE_NAME template to .gitignore"
-  else
+  elif [ "$MODE" == "overwrite" ]; then
     echo "Success: Downloaded $TEMPLATE_NAME and saved as .gitignore"
+  elif [ "$MODE" == "preview" ]; then
+    # Success message was already printed in the logic block
+    exit 0
   fi
 else
   echo "Error: Failed to download the template (Code: $CURL_EXIT_CODE)."
