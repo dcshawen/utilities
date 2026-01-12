@@ -2,22 +2,22 @@
 
 CURRENT_DIR=$(pwd);
 
-cd /mnt/d/NSCC/Fall\ 2025/PROG2100;
+cd /d/NSCC/Fall\ 2025/PROG2100;
 echo "===========PROG2100===========";
 git status;
-cd /mnt/d/NSCC/Fall\ 2025/PROG2200;
+cd /d/NSCC/Fall\ 2025/PROG2200;
 echo "===========PROG2200===========";
 git status;
-cd /mnt/d/NSCC/Fall\ 2025/MOBI3002;
+cd /d/NSCC/Fall\ 2025/MOBI3002;
 echo "===========MOBI3002===========";
 git status;
-cd /mnt/d/NSCC/Fall\ 2025/INET2005;
+cd /d/NSCC/Fall\ 2025/INET2005;
 echo "===========INET2005===========";
 git status;
-cd /mnt/d/NSCC/Fall\ 2025/INFT2100;
+cd /d/NSCC/Fall\ 2025/INFT2100;
 echo "===========INFT2100===========";
 git status;
-cd /mnt/d/NSCC/Fall\ 2025/ICOM2702;
+cd /d/NSCC/Fall\ 2025/ICOM2702;
 echo "===========ICOM2702===========";
 git status;
 
