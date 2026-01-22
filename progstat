@@ -1,24 +1,27 @@
 #!/bin/bash
 
-CURRENT_DIR=$(pwd);
+CURRENT_DIR=$(pwd)
 
-cd /d/NSCC/Winter\ 2026/PROG2400;
-echo "===========PROG2400===========";
-git status;
-cd /d/NSCC/Winter\ 2026/PROG2500;
-echo "===========PROG2500===========";
-git status;
-cd /d/NSCC/Winter\ 2026/INFT3075;
-echo "===========INFT3075===========";
-git status;
-cd /d/NSCC/Winter\ 2026/INFT4000;
-echo "===========INFT4000===========";
-git status;
-cd /d/NSCC/Winter\ 2026/ICOM2703;
-echo "===========ICOM2703===========";
-git status;
-cd /d/NSCC/Winter\ 2026/PROG3300;
-echo "===========PROG3300===========";
-git status;
+cd /d/NSCC/Winter\ 2026/PROG2400
+echo "===========PROG2400==========="
+git status
+cd /d/NSCC/Winter\ 2026/PROG2500
+echo "===========PROG2500==========="
+git status
+cd /d/NSCC/Winter\ 2026/INFT3075
+echo "===========INFT3075==========="
+git status
+cd /d/NSCC/Winter\ 2026/INFT4000
+echo "===========INFT4000==========="
+git status
+cd /d/NSCC/Winter\ 2026/ICOM2703
+echo "===========ICOM2703==========="
+git status
+cd /d/NSCC/Winter\ 2026/PROG3300
+echo "===========PROG3300==========="
+git status
+cd /c/Documents and Settings/dcsha/My Documents/Notes/General
+echo "============NOTES============="
+git status
 
-cd "$CURRENT_DIR";
+cd "$CURRENT_DIR"
