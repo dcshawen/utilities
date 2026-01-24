@@ -16,3 +16,7 @@ STart Ec2 ENvironment
 Program Status
 'progstat' is a small bash script I wrote for checking a list of git repos.
 This one has limited value to anyone other than me. All of the values are hard coded. You can probably skip this one unless you really want to modify it to your uses.
+
+## obsdaily
+Obsidian Daily GitHub Push
+'obsdaily' is the script called by Windows Task Scheduler to automatically commit and push my Obsidian notes once per day.
