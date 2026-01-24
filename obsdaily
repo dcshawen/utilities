@@ -1,0 +1,14 @@
+#!/bin/bash
+# Move to your repository directory
+# Use the MSYS2 path format (e.g., /c/Users/Name/Documents/Project)
+cd /c/Documents\ and\ Settings/dcsha/My\ Documents/Notes/General || exit
+
+# Add all changes
+git add .
+
+# Commit with a timestamp
+git commit -m "Automated backup: $(date)"
+
+# Push to the main branch
+# Note: Ensure your SSH agent is running or use a Personal Access Token
+git push origin main

@@ -20,8 +20,5 @@ git status
 cd /d/NSCC/Winter\ 2026/PROG3300
 echo "===========PROG3300==========="
 git status
-cd /c/Documents\ and\ Settings/dcsha/My\ Documents/Notes/General
-echo "============NOTES============="
-git status
 
 cd "$CURRENT_DIR"
