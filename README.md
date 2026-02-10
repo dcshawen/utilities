@@ -1,6 +1,7 @@
 # Utilities
 
 Bash Scripts that I have found useful over time and would like to preserve and/or share.
+Some of these will be more useful to people than others. "getignore" could feasibly be a valuable utility to anybody who frequently creates software projects. "obsdaily", on the other hand, is hard coded to my file system and would need to be refactored to be useful to anybody but me.
 These are free to do with as you like, they are not licensed.
 They are also not maintained in any structured way. They get updates/fixes if and when I choose.
 
