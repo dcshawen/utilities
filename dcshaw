@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Path to the feed.json file
+FEED_FILE="C:/Users/dcsha/Projects/www.dan-shaw.com/www/src/data/feed.json"
+
+function show_help {
+    echo "Usage: dcshaw --add-feed \"Content string\""
+}
+
+if [ "$1" == "--add-feed" ]; then
+    if [ -z "$2" ]; then
+        echo "Error: Content string missing."
+        show_help
+        exit 1
+    fi
+    
+    CONTENT="$2"
+    
+    # Use Node.js to handle JSON manipulation safely
+    node -e "
+    const fs = require('fs');
+    const path = '${FEED_FILE}';
+    
+    try {
+        if (!fs.existsSync(path)) {
+             console.error('File not found:', path);
+             process.exit(1);
+        }
+        const data = fs.readFileSync(path, 'utf8');
+        let json;
+        try {
+            json = JSON.parse(data);
+        } catch (e) {
+            console.error('Invalid JSON in feed.json');
+            process.exit(1);
+        }
+        
+        if (!json.feed || !Array.isArray(json.feed)) {
+             json.feed = [];
+        }
+
+        // Find max ID
+        let maxId = 0;
+        json.feed.forEach(item => {
+            const currentId = parseInt(item.id, 16);
+            if (!isNaN(currentId) && currentId > maxId) maxId = currentId;
+        });
+        
+        const newIdInt = maxId + 1;
+        const newId = '0x' + newIdInt.toString(16).padStart(4, '0');
+        
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = \`\${year}-\${month}-\${day}\`;
+        
+        const newEntry = {
+            id: newId,
+            author: 'Dan Shaw',
+            date: dateStr,
+            content: process.argv[1]
+        };
+        
+        // Add to beginning of array
+        json.feed.unshift(newEntry);
+        
+        fs.writeFileSync(path, JSON.stringify(json, null, '\t'));
+        console.log('Successfully added new feed entry:');
+        console.log(JSON.stringify(newEntry, null, 2));
+        
+    } catch (err) {
+        console.error('Error processing file:', err);
+        process.exit(1);
+    }
+    " "$CONTENT"
+    
+else
+    show_help
+fi
