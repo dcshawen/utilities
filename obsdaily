@@ -3,6 +3,46 @@
 # Use the MSYS2 path format (e.g., /c/Users/Name/Documents/Project)
 cd /c/Documents\ and\ Settings/dcsha/My\ Documents/Notes/General || exit
 
+# Create daily Notes
+NOTE_PATH="/c/Documents and Settings/dcsha/My Documents/Notes/General/Notes/$(date +"%Y %B")"
+cd "$NOTE_PATH"
+pwd
+TODAY=$(date +"%B %d, %Y")
+
+# Create the folder if it doesn't exist
+if [ -d "$TODAY" ]; then
+  echo "Folder already exists: $TODAY/"
+else
+  mkdir "$TODAY"
+  echo "Created folder: $TODAY/"
+fi
+
+# Create the .md file if it doesn't exist
+if [ -f "$TODAY/$TODAY.md" ]; then
+  echo "File already exists: $TODAY/$TODAY.md"
+else
+  echo "# Notes" >>"$TODAY/$TODAY.md"
+  echo "Created file: $TODAY/$TODAY.md"
+fi
+
+TOMORROW=$(date -d "tomorrow" +"%B %d %Y" 2>/dev/null || date -v +1d +"%B %d %Y")
+
+# Create the folder if it doesn't exist
+if [ -d "$TOMORROW" ]; then
+  echo "Folder already exists: $TOMORROW/"
+else
+  mkdir "$TOMORROW"
+  echo "Created folder: $TOMORROW/"
+fi
+
+# Create the .md file if it doesn't exist
+if [ -f "$TOMORROW/$TOMORROW.md" ]; then
+  echo "File already exists: $TOMORROW/$TOMORROW.md"
+else
+  echo "# Notes" >>"$TOMORROW/$TOMORROW.md"
+  echo "Created file: $TOMORROW/$TOMORROW.md"
+fi
+
 # Add all changes
 git add .
 
