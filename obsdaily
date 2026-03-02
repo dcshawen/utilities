@@ -5,7 +5,8 @@ cd /c/Documents\ and\ Settings/dcsha/My\ Documents/Notes/General || exit
 
 # Create daily Notes
 NOTE_PATH="/c/Documents and Settings/dcsha/My Documents/Notes/General/Notes/$(date +"%Y %B")"
-cd "$NOTE_PATH"
+mkdir -p "$NOTE_PATH"
+cd "$NOTE_PATH" || exit
 pwd
 TODAY=$(date +"%B %d, %Y")
 
@@ -25,7 +26,7 @@ else
   echo "Created file: $TODAY/$TODAY.md"
 fi
 
-TOMORROW=$(date -d "tomorrow" +"%B %d %Y" 2>/dev/null || date -v +1d +"%B %d %Y")
+TOMORROW=$(date -d "tomorrow" +"%B %d, %Y" 2>/dev/null || date -v +1d +"%B %d, %Y")
 
 # Create the folder if it doesn't exist
 if [ -d "$TOMORROW" ]; then
